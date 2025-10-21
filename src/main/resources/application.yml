@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: reactive-project
+  r2dbc:
+    url: r2dbc:postgresql://ep-nameless-frost-ada33wb2-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+    username: neondb_owner
+    password: npg_AT3ryds4pknF
+  main:
+    web-application-type: reactive
+  codec:
+    max-in-memory-size: 10MB
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.r2dbc: DEBUG
