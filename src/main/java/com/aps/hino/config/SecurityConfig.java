@@ -12,12 +12,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        http
-            .csrf(csrf -> csrf.disable())
-            .authorizeExchange(exchanges -> exchanges
-                .anyExchange().permitAll()  // ⚠️ Permitir todo sin autenticación
-            );
-        
-        return http.build();
+        return http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable) // 🚫 Desactiva CSRF
+                .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers("/api/**").permitAll() // ✅ Deja libre todo lo de /api/
+                        .anyExchange().permitAll() // ✅ Permite cualquier otra ruta
+                )
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable) // ❌ Quita login básico
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable) // ❌ Quita formulario de login
+                .build();
     }
 }

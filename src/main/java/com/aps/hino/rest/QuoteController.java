@@ -1,66 +1,59 @@
 package com.aps.hino.rest;
 
+import org.springframework.web.bind.annotation.*;
 import com.aps.hino.model.Quote;
 import com.aps.hino.service.QuoteService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/quotes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-@Tag(name = "Quotes", description = "Gestión de cotizaciones")
 public class QuoteController {
 
-    private final QuoteService service;
+    private final QuoteService quoteService;
 
+    // 🔹 Listar solo cotizaciones activas
     @GetMapping
-    @Operation(summary = "Obtener todas las cotizaciones")
     public Flux<Quote> getAllQuotes() {
-        return service.getAllQuotes();
+        return quoteService.getAllQuotes();
     }
 
+    // 🔹 Obtener una cotización por ID
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener cotización por ID")
-    public Mono<ResponseEntity<Quote>> getQuoteById(@PathVariable Long id) {
-        return service.getQuoteById(id)
-                .map(quote -> ResponseEntity.ok(quote))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public Mono<Quote> getQuoteById(@PathVariable Long id) {
+        return quoteService.getQuoteById(id);
     }
 
+    // 🔹 Crear una nueva cotización
     @PostMapping
-    @Operation(summary = "Crear nueva cotización")
-    public Mono<ResponseEntity<Quote>> createQuote(@RequestBody Quote quote) {
-        return service.saveQuote(quote)
-                .map(savedQuote -> ResponseEntity.status(HttpStatus.CREATED).body(savedQuote));
+    public Mono<Quote> createQuote(@RequestBody Quote quote) {
+        return quoteService.createQuote(quote);
     }
 
+    // 🔹 Actualizar una cotización existente
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar cotización existente")
-    public Mono<ResponseEntity<Quote>> updateQuote(@PathVariable Long id, @RequestBody Quote quote) {
-        return service.getQuoteById(id)
-                .flatMap(existingQuote -> {
-                    quote.setId(id);
-                    return service.saveQuote(quote);
-                })
-                .map(updatedQuote -> ResponseEntity.ok(updatedQuote))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public Mono<Quote> updateQuote(@PathVariable Long id, @RequestBody Quote quote) {
+        return quoteService.updateQuote(id, quote);
     }
 
+    // 🔹 Eliminación lógica (status = "inactivo")
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar cotización por ID")
-    public Mono<ResponseEntity<Void>> deleteQuote(@PathVariable Long id) {
-        return service.getQuoteById(id)
-                .flatMap(existingQuote ->
-                        service.deleteQuote(id)
-                                .then(Mono.just(ResponseEntity.noContent().<Void>build()))
-                )
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    public Mono<Void> deleteQuote(@PathVariable Long id) {
+        return quoteService.deleteQuote(id);
+    }
+
+    // 🔹 Restaurar una cotización eliminada (status = "activo")
+    @PutMapping("/restore/{id}")
+    public Mono<Quote> restoreQuote(@PathVariable Long id) {
+        return quoteService.restoreQuote(id);
+    }
+
+    // 🔹 (Opcional) Listar todas las inactivas
+    @GetMapping("/inactivas")
+    public Flux<Quote> getInactiveQuotes() {
+        return quoteService.getAllQuotes()
+                .filter(quote -> "inactivo".equalsIgnoreCase(quote.getStatus()));
     }
 }

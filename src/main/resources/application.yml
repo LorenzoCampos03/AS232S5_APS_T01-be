@@ -33,8 +33,3 @@ logging:
     org.springframework.r2dbc: ${LOG_LEVEL_R2DBC:DEBUG}
     io.r2dbc.postgresql.QUERY: ${LOG_LEVEL_QUERY:DEBUG}
     io.r2dbc.postgresql.PARAM: ${LOG_LEVEL_PARAM:DEBUG}
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    url: http://localhost:8080/v3/api-docs

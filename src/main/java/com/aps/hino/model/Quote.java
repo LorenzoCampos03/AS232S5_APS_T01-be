@@ -1,13 +1,16 @@
 package com.aps.hino.model;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.time.OffsetDateTime;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table("quotes")
 public class Quote {
 
@@ -32,18 +35,24 @@ public class Quote {
     @Column("mensaje")
     private String mensaje;
 
+    // Enum quote_status en la BD
     @Column("estado")
-    private String estado = "pendiente";
+    private QuoteStatus estado;
 
+    // Enum quote_priority en la BD
     @Column("prioridad")
-    private String prioridad = "media";
+    private QuotePriority prioridad;
 
     @Column("asesor_asignado_id")
     private Integer asesorAsignadoId;
 
+    // NUEVO: campo status adicional
+    @Column("status")
+    private String status;
+
     @Column("created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private OffsetDateTime createdAt;
 
     @Column("updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private OffsetDateTime updatedAt;
 }
