@@ -2,37 +2,39 @@ package com.aps.hino.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        // Puerto que Codespaces asigna públicamente
+        String codespacePort = System.getenv("PORT"); // si es null, usar 8080 local
+        String codespaceName = System.getenv("CODESPACE_NAME");
+
+        Server server;
+
+        if (codespaceName != null) {
+            String port = (codespacePort != null) ? codespacePort : "8080";
+            server = new Server()
+                    .url("https://" + codespaceName + "-" + port + ".app.github.dev")
+                    .description("Codespaces Server");
+        } else {
+            server = new Server()
+                    .url("http://localhost:8080")
+                    .description("Local Server");
+        }
+
         return new OpenAPI()
                 .info(new Info()
-                        .title("API de Cotizaciones Hino")
+                        .title("Hino API")
                         .version("1.0")
-                        .description("Documentación de los endpoints de Quote"));
-    }
-
-    // Esto agrega la configuración de seguridad aquí mismo
-    @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        http
-            .csrf().disable()
-            .authorizeExchange()
-                .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .anyExchange().permitAll() // TODO: Cambiar a .authenticated() cuando agregues JWT
-            .and()
-            .httpBasic().disable()
-            .formLogin().disable()
-            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance());
-
-        return http.build();
+                        .description("API para gestión de cotizaciones de transporte"))
+                .servers(List.of(server));
     }
 }

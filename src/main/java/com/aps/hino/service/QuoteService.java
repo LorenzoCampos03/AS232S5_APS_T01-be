@@ -15,22 +15,18 @@ public class QuoteService {
         this.quoteRepository = quoteRepository;
     }
 
-    // Devuelve todos los registros como Flux<Quote>
     public Flux<Quote> getAllQuotes() {
         return quoteRepository.findAll();
     }
 
-    // Devuelve un registro como Mono<Quote>
     public Mono<Quote> getQuoteById(Long id) {
         return quoteRepository.findById(id);
     }
 
-    // Guardar o actualizar una cotización
     public Mono<Quote> saveQuote(Quote quote) {
         return quoteRepository.save(quote);
     }
 
-    // Eliminar una cotización
     public Mono<Void> deleteQuote(Long id) {
         return quoteRepository.deleteById(id);
     }
