@@ -80,6 +80,8 @@ public class SecurityConfig {
                         // Public endpoints (no authentication required)
                         .pathMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .pathMatchers("/api/public/**").permitAll()
+                        // TEMP: Open vehicles API for testing without authentication
+                        .pathMatchers("/api/vehicles/**").permitAll()
 
                         // Swagger/OpenAPI endpoints
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**")

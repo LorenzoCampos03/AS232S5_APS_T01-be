@@ -10,6 +10,11 @@ spring:
       initial-size: 10
       max-size: 20
       max-idle-time: 30m
+      # Validate connections before use to avoid 'Connection validation failed'
+      validation-query: SELECT 1
+      validation-timeout: 5s
+      # Optional: ensure a round-trip validation (uncomment if necesario)
+      # validation-depth: remote
 
 server:
   port: ${SERVER_PORT:8080}
