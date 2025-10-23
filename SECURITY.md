@@ -4,8 +4,9 @@
 
 | Versión | Soportada          |
 | ------- | ------------------ |
+| 1.3.x   | :white_check_mark: |
 | 1.2.x   | :white_check_mark: |
-| 1.1.x   | :white_check_mark: |
+| 1.1.x   | :x:                |
 | < 1.0   | :x:                |
 
 ## 🛡️ Características de Seguridad
@@ -21,6 +22,13 @@
 - Factor de trabajo: 10 rounds
 - Nunca se almacenan contraseñas en texto plano
 - Nunca se retornan contraseñas en respuestas API
+- Contraseñas hasheadas antes de insertar en base de datos
+
+### Base de Datos
+- Tipos ENUM personalizados para roles y estados
+- Queries parametrizadas con CAST para prevenir SQL injection
+- Pool de conexiones configurado con validación automática
+- Timestamps de auditoría (`createdAt`, `updatedAt`) para trazabilidad
 
 ### Control de Acceso
 - Autorización basada en roles (RBAC)
@@ -89,7 +97,11 @@ El sistema registra:
 ```log
 WARN - Authentication failed for user: usuario@example.com
 INFO - Soft deleting user with id: 5
+INFO - Restoring user with id: 3
 ERROR - Error validating token
+ERROR - Connection Error: Connection reset
+DEBUG - Creating user: usuario@example.com
+DEBUG - Updating user with id: 2
 ```
 
 ## 🛠️ Checklist de Seguridad
@@ -108,6 +120,9 @@ ERROR - Error validating token
 - [ ] Implementar rotación de secrets
 - [ ] Configurar alertas de seguridad
 - [ ] Realizar pruebas de penetración
+- [ ] Ajustar pool de conexiones según carga esperada
+- [ ] Verificar tipos ENUM en PostgreSQL
+- [ ] Configurar timeouts de conexión apropiados
 
 ### Mantenimiento Regular
 
@@ -130,6 +145,33 @@ Para consultas de seguridad:
 - Email: henry.lunazco@vallegrande.edu.pe
 - Equipo: Seguridad de la Información - Hino Perú
 
+## 🔧 Configuración de Seguridad
+
+### Pool de Conexiones R2DBC
+
+```yaml
+spring:
+  r2dbc:
+    pool:
+      initial-size: 5          # Conexiones iniciales
+      max-size: 10             # Máximo de conexiones
+      max-idle-time: 10m       # Tiempo máximo inactivo
+      max-life-time: 30m       # Tiempo de vida máximo
+      validation-query: SELECT 1  # Validar conexiones
+```
+
+### Tipos ENUM PostgreSQL
+
+El sistema usa tipos ENUM personalizados:
+- `user_role`: admin, asesor, mecanico, supervisor
+- `user_status`: activo, inactivo
+
+Las queries usan CAST explícito para compatibilidad:
+```sql
+CAST($1 AS user_role)
+CAST($2 AS user_status)
+```
+
 ---
 
-**Última actualización**: 21 de Octubre, 2025
+**Última actualización**: 22 de Octubre, 2025

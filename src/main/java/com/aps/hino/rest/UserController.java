@@ -130,7 +130,7 @@ public class UserController {
                                                 ApiResponse.<Void>success("Usuario eliminado exitosamente", null))));
         }
 
-        @PutMapping("/{id}/restore")
+        @PatchMapping("/{id}/restore")
         @PreAuthorize("hasRole('ADMIN')")
         @Operation(summary = "Restaurar usuario eliminado", description = "Restaura un usuario que fue eliminado lógicamente. Solo accesible para administradores.")
         @ApiResponses(value = {
@@ -142,45 +142,13 @@ public class UserController {
         @SecurityRequirement(name = "Bearer Authentication")
         public Mono<ApiResponse<UserDto>> restoreUser(
                         @Parameter(description = "ID del usuario") @PathVariable Long id) {
-                log.info("PUT /api/users/{}/restore", id);
+                log.info("PATCH /api/users/{}/restore", id);
                 return userService.restoreUser(id)
                                 .map(UserDto::fromEntity)
                                 .map(dto -> ApiResponse.success("Usuario restaurado exitosamente", dto));
         }
 
-        @GetMapping("/deleted")
-        @PreAuthorize("hasRole('ADMIN')")
-        @Operation(summary = "Obtener usuarios eliminados", description = "Retorna una lista paginada de usuarios eliminados lógicamente. Solo accesible para administradores.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de usuarios eliminados obtenida exitosamente"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "No tiene permisos de administrador")
-        })
-        @SecurityRequirement(name = "Bearer Authentication")
-        public Mono<ApiResponse<Map<String, Object>>> getDeletedUsers(
-                        @Parameter(description = "Número de página (inicia en 0)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "Tamaño de página") @RequestParam(defaultValue = "10") int size) {
-                log.info("GET /api/users/deleted - page: {}, size: {}", page, size);
-                return userService.getDeletedUsers(page, size)
-                                .map(result -> ApiResponse.success("Usuarios eliminados obtenidos exitosamente",
-                                                result));
-        }
-
-        @DeleteMapping("/{id}/permanent")
-        @PreAuthorize("hasRole('ADMIN')")
-        @Operation(summary = "Eliminar usuario permanentemente", description = "Elimina físicamente un usuario de la base de datos. Esta acción NO puede deshacerse. Solo accesible para administradores.")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Usuario eliminado permanentemente"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "No tiene permisos de administrador")
-        })
-        @SecurityRequirement(name = "Bearer Authentication")
-        public Mono<org.springframework.http.ResponseEntity<ApiResponse<Void>>> permanentlyDeleteUser(
-                        @Parameter(description = "ID del usuario") @PathVariable Long id) {
-                log.warn("DELETE /api/users/{}/permanent - PERMANENT DELETE", id);
-                return userService.permanentlyDeleteUser(id)
-                                .then(Mono.just(org.springframework.http.ResponseEntity.ok(
-                                                ApiResponse.<Void>success("Usuario eliminado permanentemente", null))));
-        }
+        // ELIMINACIÓN FÍSICA REMOVIDA - Solo se permite eliminación lógica (soft delete)
 
         @GetMapping("/stats")
         @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR')")

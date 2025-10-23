@@ -15,42 +15,41 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDto {
-    
+
     private Long id;
-    
+
     @NotBlank(message = "El nombre es requerido")
     private String nombre;
-    
+
     @NotBlank(message = "El email es requerido")
     @Email(message = "El email debe ser válido")
     private String email;
-    
+
     private String telefono;
-    
+
     @NotBlank(message = "El rol es requerido")
-    @Pattern(regexp = "admin|asesor|mecanico|supervisor", message = "El rol debe ser 'admin', 'asesor', 'mecanico' o 'supervisor'")
+    @Pattern(regexp = "^(admin|asesor|mecanico|supervisor)$", message = "El rol debe ser 'admin', 'asesor', 'mecanico' o 'supervisor'")
     private String rol;
-    
+
     private String especialidad;
-    
-    @NotBlank(message = "El estado es requerido")
+
     @Pattern(regexp = "activo|inactivo", message = "El estado debe ser 'activo' o 'inactivo'")
     private String estado;
-    
+
     private Integer ventas;
-    
+
     private LocalDate fechaIngreso;
-    
+
     private String avatarUrl;
-    
+
     // Password is only used for creation/update, never returned
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String password;
-    
+
     private LocalDateTime createdAt;
-    
+
     private LocalDateTime updatedAt;
-    
+
     // Mapper methods
     public static UserDto fromEntity(User user) {
         UserDto dto = new UserDto();
@@ -69,7 +68,7 @@ public class UserDto {
         // Never include password hash in DTO
         return dto;
     }
-    
+
     public User toEntity() {
         User user = new User();
         user.setId(this.id);
@@ -78,12 +77,11 @@ public class UserDto {
         user.setTelefono(this.telefono);
         user.setRol(this.rol);
         user.setEspecialidad(this.especialidad);
-        user.setEstado(this.estado);
+        user.setEstado(this.estado != null ? this.estado : "activo");
         user.setVentas(this.ventas);
         user.setFechaIngreso(this.fechaIngreso);
         user.setAvatarUrl(this.avatarUrl);
-        user.setCreatedAt(this.createdAt);
-        user.setUpdatedAt(this.updatedAt);
+        // createdAt y updatedAt se manejan en el servicio
         // Password hash is set separately in service layer
         return user;
     }

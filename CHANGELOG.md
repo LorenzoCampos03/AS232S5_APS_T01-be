@@ -5,6 +5,44 @@ Todos los cambios notables en el módulo de Usuarios serán documentados en este
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.3.0] - 2025-10-22
+
+### Agregado
+- Guía de implementación frontend para autenticación (`AUTH_FRONTEND.md`)
+- Queries personalizadas con CAST para tipos ENUM de PostgreSQL
+- Método `insertUser()` en repositorio para creación con CAST
+- Método `updateUser()` en repositorio para actualización con CAST
+- Soporte completo para tipos ENUM `user_role` y `user_status`
+
+### Cambiado
+- `PUT /api/users/{id}/restore` cambiado a `PATCH /api/users/{id}/restore`
+- `createdAt` ahora se establece automáticamente al crear usuario
+- `updatedAt` es `null` al crear y solo se actualiza en operaciones PATCH
+- Eliminado campo de usuario creador en el registro
+- Método `updateEstado()` ahora recibe `updatedAt` como parámetro
+- Pool de conexiones R2DBC optimizado para mejor estabilidad
+
+### Removido
+- Endpoint `GET /api/users/deleted` eliminado
+- Método `getDeletedUsers()` del servicio eliminado
+- Uso de `save()` directo reemplazado por queries con CAST
+
+### Corregido
+- Error de tipo ENUM en PostgreSQL al crear/actualizar usuarios
+- Error "column rol is of type user_role but expression is of type character varying"
+- Configuración del pool de conexiones para evitar timeouts
+- Sintaxis duplicada en `UserDto.toEntity()`
+
+### Mejorado
+- Manejo de timestamps más consistente (creación vs actualización)
+- Compatibilidad con tipos ENUM personalizados de PostgreSQL
+- Estabilidad de conexiones con la base de datos
+- Documentación de integración frontend
+
+### Seguridad
+- Timestamps de auditoría más precisos para operaciones PATCH
+- Mejor trazabilidad de cambios con `updatedAt`
+
 ## [1.2.0] - 2025-10-21
 
 ### Agregado
