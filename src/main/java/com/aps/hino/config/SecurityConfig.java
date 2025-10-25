@@ -82,6 +82,8 @@ public class SecurityConfig {
                         .pathMatchers("/api/public/**").permitAll()
                         // TEMP: Open vehicles API for testing without authentication
                         .pathMatchers("/api/vehicles/**").permitAll()
+                        // 💥 Permitir temporalmente las cotizaciones sin autenticación
+                        .pathMatchers("/api/quotes/**").permitAll()
 
                         // Swagger/OpenAPI endpoints
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**")
