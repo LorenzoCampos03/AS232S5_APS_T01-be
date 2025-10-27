@@ -89,7 +89,8 @@ public class JwtAuthenticationFilter implements WebFilter {
                path.startsWith("/api/public/") ||
                // TEMP: open vehicles endpoints for testing without JWT
                path.startsWith("/api/vehicles") ||
-               path.startsWith("/api/quotes") ||
+               // Nuevo esquema de cotizaciones abierto temporalmente
+               path.startsWith("/api/cotizaciones") ||
                path.startsWith("/v3/api-docs") ||
                path.startsWith("/swagger-ui") ||
                path.startsWith("/webjars/") ||

@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 import com.aps.hino.dto.ApiResponse;
@@ -70,5 +72,36 @@ public class AuthController {
 
         return Mono.just(ResponseEntity.ok(
                 ApiResponse.<Void>success("Sesión cerrada exitosamente", null)));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Usuario actual", description = "Retorna información del usuario autenticado")
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "Bearer Authentication")
+    public Mono<ResponseEntity<ApiResponse<Object>>> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("No autenticado")));
+        }
+
+        Object details = authentication.getDetails();
+        Long userId = null;
+        if (details instanceof Long) {
+            userId = (Long) details;
+        } else if (details instanceof Integer) {
+            userId = ((Integer) details).longValue();
+        }
+
+        String email = authentication.getName();
+        String roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .reduce((a, b) -> a + "," + b)
+                .orElse("");
+
+        var payload = new java.util.HashMap<String, Object>();
+        payload.put("id", userId);
+        payload.put("email", email);
+        payload.put("roles", roles);
+
+        return Mono.just(ResponseEntity.ok(ApiResponse.success("OK", payload)));
     }
 }

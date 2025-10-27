@@ -15,7 +15,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import com.aps.hino.security.JwtAuthenticationFilter;
 import com.aps.hino.security.SecurityContextRepository;
 
-import java.util.Arrays;
+import java.util.Arrays; 
 
 @Configuration
 @EnableWebFluxSecurity
@@ -82,8 +82,9 @@ public class SecurityConfig {
                         .pathMatchers("/api/public/**").permitAll()
                         // TEMP: Open vehicles API for testing without authentication
                         .pathMatchers("/api/vehicles/**").permitAll()
-                        // 💥 Permitir temporalmente las cotizaciones sin autenticación
-                        .pathMatchers("/api/quotes/**").permitAll()
+                        // 💥 Permitir temporalmente cotizaciones (nuevo esquema) sin autenticación
+                        .pathMatchers("/api/cotizaciones").permitAll()
+                        .pathMatchers("/api/cotizaciones/**").permitAll()
 
                         // Swagger/OpenAPI endpoints
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**")

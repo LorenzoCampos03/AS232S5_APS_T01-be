@@ -20,7 +20,7 @@ CREATE TABLE vehicles (
     precio DECIMAL(12, 2) NOT NULL,
     capacidad VARCHAR(100) NOT NULL,
     motor VARCHAR(100) NOT NULL,
-    año INTEGER NOT NULL,
+    anio INTEGER NOT NULL,
     estado vehicle_status NOT NULL DEFAULT 'disponible',
     stock INTEGER NOT NULL DEFAULT 1,
     imagen_url VARCHAR(500),
