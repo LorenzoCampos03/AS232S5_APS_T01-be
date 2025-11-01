@@ -24,14 +24,24 @@ import java.util.Map;
 public class MaintenanceController {
 
     private final MaintenanceService maintenanceService;
+    private final com.aps.hino.service.NotificationService notificationService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'SUPERVISOR')")
     @Operation(summary = "Create new maintenance record")
     public Mono<ResponseEntity<MaintenanceDto>> createMaintenance(@Valid @RequestBody MaintenanceDto dto) {
-        return maintenanceService.createMaintenance(dto)
-                .map(m -> ResponseEntity.status(HttpStatus.CREATED).body(m))
-                .doOnError(e -> log.error("Error creating maintenance", e));
+    return maintenanceService.createMaintenance(dto)
+        .flatMap(created -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+            .map(ctx -> ctx.getAuthentication())
+            .defaultIfEmpty(null)
+            .flatMap(a -> {
+                Long actorId = null; String actorEmail = null;
+                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                return notificationService.createNotification("maintenance", Long.valueOf(created.getId()), "CREATE", "Mantenimiento creado: " + created.getDescripcion(), actorId, actorEmail).thenReturn(created);
+            })
+        )
+        .map(m -> ResponseEntity.status(HttpStatus.CREATED).body(m))
+        .doOnError(e -> log.error("Error creating maintenance", e));
     }
 
     @GetMapping("/{id}")
@@ -84,27 +94,54 @@ public class MaintenanceController {
     public Mono<ResponseEntity<MaintenanceDto>> updateMaintenance(
             @PathVariable Integer id,
             @Valid @RequestBody MaintenanceDto dto) {
-        return maintenanceService.updateMaintenance(id, dto)
-                .map(ResponseEntity::ok)
-                .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
+    return maintenanceService.updateMaintenance(id, dto)
+        .flatMap(updated -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+            .map(ctx -> ctx.getAuthentication())
+            .defaultIfEmpty(null)
+            .flatMap(a -> {
+                Long actorId = null; String actorEmail = null;
+                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                return notificationService.createNotification("maintenance", Long.valueOf(updated.getId()), "UPDATE", "Mantenimiento actualizado: " + updated.getDescripcion(), actorId, actorEmail).thenReturn(updated);
+            })
+        )
+        .map(ResponseEntity::ok)
+        .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     @Operation(summary = "Delete maintenance record")
     public Mono<ResponseEntity<Void>> deleteMaintenance(@PathVariable Integer id) {
-        return maintenanceService.deleteMaintenance(id)
-                .map(v -> ResponseEntity.noContent().<Void>build())
-                .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
+    return maintenanceService.deleteMaintenance(id)
+        .flatMap(deleted -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+            .map(ctx -> ctx.getAuthentication())
+            .defaultIfEmpty(null)
+            .flatMap(a -> {
+                Long actorId = null; String actorEmail = null;
+                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                return notificationService.createNotification("maintenance", Long.valueOf(deleted.getId()), "DELETE", "Mantenimiento cancelado: " + deleted.getId(), actorId, actorEmail);
+            })
+            .thenReturn(ResponseEntity.noContent().<Void>build())
+        )
+        .onErrorResume(e -> Mono.just(ResponseEntity.notFound().build()));
     }
 
     @PutMapping("/reactivate/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MECANICO', 'SUPERVISOR')")
     @Operation(summary = "Reactivate cancelled maintenance")
     public Mono<ResponseEntity<MaintenanceDto>> reactivateMaintenance(@PathVariable Integer id) {
-        return maintenanceService.reactivateMaintenance(id)
-                .map(ResponseEntity::ok)
-                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
+    return maintenanceService.reactivateMaintenance(id)
+        .flatMap(reactivated -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+            .map(ctx -> ctx.getAuthentication())
+            .defaultIfEmpty(null)
+            .flatMap(a -> {
+                Long actorId = null; String actorEmail = null;
+                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                return notificationService.createNotification("maintenance", Long.valueOf(reactivated.getId()), "RESTORE", "Mantenimiento reactivado: " + reactivated.getId(), actorId, actorEmail).thenReturn(reactivated);
+            })
+        )
+        .map(ResponseEntity::ok)
+        .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().build()));
     }
 
     @GetMapping("/active")

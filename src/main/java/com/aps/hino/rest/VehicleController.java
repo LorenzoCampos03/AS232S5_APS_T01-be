@@ -21,13 +21,23 @@ import reactor.core.publisher.Mono;
 public class VehicleController {
 
     private final VehicleService vehicleService;
+    private final com.aps.hino.service.NotificationService notificationService;
 
     @PostMapping
     @Operation(summary = "Create new vehicle")
     public Mono<ResponseEntity<VehicleDto>> create(@Valid @RequestBody VehicleDto dto) {
-        return vehicleService.createVehicle(dto)
-                .map(v -> ResponseEntity.status(HttpStatus.CREATED).body(v))
-                .doOnError(e -> log.error("Error creating vehicle", e));
+    return vehicleService.createVehicle(dto)
+        .flatMap(created -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+            .map(ctx -> ctx.getAuthentication())
+            .defaultIfEmpty(null)
+            .flatMap(a -> {
+                Long actorId = null; String actorEmail = null;
+                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                return notificationService.createNotification("vehicles", Long.valueOf(created.getId()), "CREATE", "Vehículo creado: " + created.getModelo(), actorId, actorEmail).thenReturn(created);
+            })
+        )
+        .map(v -> ResponseEntity.status(HttpStatus.CREATED).body(v))
+        .doOnError(e -> log.error("Error creating vehicle", e));
     }
 
     @GetMapping("/{id}")
@@ -47,9 +57,18 @@ public class VehicleController {
     @PutMapping("/{id}")
     @Operation(summary = "Update vehicle")
     public Mono<ResponseEntity<VehicleDto>> update(@PathVariable Integer id, @Valid @RequestBody VehicleDto dto) {
-        return vehicleService.updateVehicle(id, dto)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+    return vehicleService.updateVehicle(id, dto)
+        .flatMap(updated -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+            .map(ctx -> ctx.getAuthentication())
+            .defaultIfEmpty(null)
+            .flatMap(a -> {
+                Long actorId = null; String actorEmail = null;
+                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                return notificationService.createNotification("vehicles", Long.valueOf(updated.getId()), "UPDATE", "Vehículo actualizado: " + updated.getModelo(), actorId, actorEmail).thenReturn(updated);
+            })
+        )
+        .map(ResponseEntity::ok)
+        .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}/estado")
