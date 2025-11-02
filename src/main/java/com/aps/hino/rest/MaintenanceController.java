@@ -106,6 +106,9 @@ public class MaintenanceController {
     public Mono<ResponseEntity<MaintenanceDto>> updateMaintenance(
             @PathVariable Integer id,
             @Valid @RequestBody MaintenanceDto dto) {
+        
+        log.info("🔄 Updating maintenance ID: {} with data: {}", id, dto);
+        
         return maintenanceService.updateMaintenance(id, dto)
                 .flatMap(updated -> getAuthenticatedUser()
                         .flatMap(user -> notificationService.createNotification(
@@ -117,9 +120,15 @@ public class MaintenanceController {
                                 user.actorEmail()
                         ).thenReturn(updated))
                 )
-                .map(ResponseEntity::ok)
+                .map(updated -> {
+                    log.info("✅ Maintenance updated successfully: {}", updated.getId());
+                    return ResponseEntity.ok(updated);
+                })
                 .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
-                .doOnError(e -> log.error("❌ Error updating maintenance", e));
+                .onErrorResume(e -> {
+                    log.error("❌ Error updating maintenance ID: {} - Error: {}", id, e.getMessage(), e);
+                    return Mono.just(ResponseEntity.badRequest().build());
+                });
     }
 
     /** 🔹 Eliminar mantenimiento */
@@ -208,4 +217,26 @@ public class MaintenanceController {
 
     /** 🔹 Record simple para transportar usuario */
     private record AuthUser(Long actorId, String actorEmail) {}
+    
+    // ========== ENDPOINTS DE TESTING (SIN AUTENTICACIÓN ESTRICTA) ==========
+    
+    @PutMapping("/test-update/{id}")
+    @Operation(summary = "TESTING: Update maintenance without strict validation")
+    public Mono<ResponseEntity<MaintenanceDto>> testUpdateMaintenance(
+            @PathVariable Integer id,
+            @RequestBody MaintenanceDto dto) {
+        
+        log.info("🧪 TEST: Updating maintenance ID: {} with data: {}", id, dto);
+        
+        return maintenanceService.updateMaintenance(id, dto)
+                .map(updated -> {
+                    log.info("✅ TEST: Maintenance updated successfully: {}", updated.getId());
+                    return ResponseEntity.ok(updated);
+                })
+                .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
+                .onErrorResume(e -> {
+                    log.error("❌ TEST: Error updating maintenance ID: {} - Error: {}", id, e.getMessage(), e);
+                    return Mono.just(ResponseEntity.badRequest().build());
+                });
+    }
 }
