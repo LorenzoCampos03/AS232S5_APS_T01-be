@@ -28,6 +28,7 @@ import com.aps.hino.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
+    private final com.aps.hino.service.NotificationService notificationService;
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario con email y contraseña, retorna un token JWT")
@@ -39,6 +40,14 @@ public class AuthController {
         log.info("POST /api/auth/login - User: {}", loginRequest.getEmail());
 
         return authService.authenticate(loginRequest.getEmail(), loginRequest.getPassword())
+                .flatMap(loginResponse -> {
+                    // Registrar notificación de login exitoso
+                    Long userId = loginResponse.getUser() != null ? loginResponse.getUser().getId() : null;
+                    String userEmail = loginResponse.getUser() != null ? loginResponse.getUser().getEmail() : loginRequest.getEmail();
+                    log.info("🔐 User logged in successfully: userId={}, email={}", userId, userEmail);
+                    return notificationService.createNotification("auth", userId, "LOGIN", "Usuario inició sesión: " + userEmail, userId, userEmail)
+                            .thenReturn(loginResponse);
+                })
                 .map(loginResponse -> {
                     ApiResponse<LoginResponse> response = ApiResponse.success(
                             "Autenticación exitosa",
@@ -47,6 +56,9 @@ public class AuthController {
                 })
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("Authentication failed for user: {}", loginRequest.getEmail());
+                    // Registrar intento de login fallido
+                    notificationService.createNotification("auth", null, "LOGIN_FAILED", "Intento de login fallido: " + loginRequest.getEmail(), null, loginRequest.getEmail())
+                            .subscribe(); // Fire and forget
                     ApiResponse<LoginResponse> response = ApiResponse.error("Credenciales incorrectas");
                     return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response));
                 }));
@@ -66,6 +78,15 @@ public class AuthController {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             return authService.logout(token)
+                    .then(org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                            .map(ctx -> ctx.getAuthentication())
+                            .defaultIfEmpty(null)
+                            .flatMap(a -> {
+                                Long actorId = null; String actorEmail = null;
+                                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                                return notificationService.createNotification("auth", actorId, "LOGOUT", "Usuario cerró sesión: " + (actorEmail != null ? actorEmail : "desconocido"), actorId, actorEmail);
+                            })
+                    )
                     .then(Mono.just(ResponseEntity.ok(
                             ApiResponse.<Void>success("Sesión cerrada exitosamente", null))));
         }

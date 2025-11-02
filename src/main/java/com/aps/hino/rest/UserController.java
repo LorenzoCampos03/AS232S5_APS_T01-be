@@ -27,6 +27,7 @@ import java.util.Map;
 public class UserController {
 
         private final UserService userService;
+        private final com.aps.hino.service.NotificationService notificationService;
 
         @GetMapping
         @Operation(summary = "Obtener todos los usuarios", description = "Retorna una lista paginada de todos los usuarios del sistema")
@@ -79,6 +80,15 @@ public class UserController {
                 }
 
                 return userService.createUser(user)
+                                .flatMap(created -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                                        .map(ctx -> ctx.getAuthentication())
+                                        .switchIfEmpty(Mono.empty())
+                                        .flatMap(a -> {
+                                                Long actorId = null; String actorEmail = null;
+                                                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                                                return notificationService.createNotification("users", created.getId(), "CREATE", "Usuario creado: " + created.getEmail(), actorId, actorEmail).thenReturn(created);
+                                        })
+                                )
                                 .map(UserDto::fromEntity)
                                 .map(dto -> ApiResponse.success("Usuario creado exitosamente", dto))
                                 .map(response -> org.springframework.http.ResponseEntity.status(HttpStatus.CREATED)
@@ -108,6 +118,15 @@ public class UserController {
                 }
 
                 return userService.updateUser(id, user)
+                                .flatMap(updated -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                                        .map(ctx -> ctx.getAuthentication())
+                                        .switchIfEmpty(Mono.empty())
+                                        .flatMap(a -> {
+                                                Long actorId = null; String actorEmail = null;
+                                                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                                                return notificationService.createNotification("users", updated.getId(), "UPDATE", "Usuario actualizado: " + updated.getEmail(), actorId, actorEmail).thenReturn(updated);
+                                        })
+                                )
                                 .map(UserDto::fromEntity)
                                 .map(dto -> ApiResponse.success("Usuario actualizado exitosamente", dto));
         }
@@ -126,6 +145,15 @@ public class UserController {
                         @Parameter(description = "ID del usuario") @PathVariable Long id) {
                 log.info("DELETE /api/users/{}", id);
                 return userService.deleteUser(id)
+                                .then(org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                                        .map(ctx -> ctx.getAuthentication())
+                                        .switchIfEmpty(Mono.empty())
+                                        .flatMap(a -> {
+                                                Long actorId = null; String actorEmail = null;
+                                                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                                                return notificationService.createNotification("users", id, "DELETE", "Usuario eliminado: ID " + id, actorId, actorEmail);
+                                        })
+                                )
                                 .then(Mono.just(org.springframework.http.ResponseEntity.ok(
                                                 ApiResponse.<Void>success("Usuario eliminado exitosamente", null))));
         }
@@ -144,6 +172,15 @@ public class UserController {
                         @Parameter(description = "ID del usuario") @PathVariable Long id) {
                 log.info("PATCH /api/users/{}/restore", id);
                 return userService.restoreUser(id)
+                                .flatMap(restored -> org.springframework.security.core.context.ReactiveSecurityContextHolder.getContext()
+                                        .map(ctx -> ctx.getAuthentication())
+                                        .switchIfEmpty(Mono.empty())
+                                        .flatMap(a -> {
+                                                Long actorId = null; String actorEmail = null;
+                                                if (a != null) { try { actorEmail = (String) a.getPrincipal(); Object det = a.getDetails(); if (det instanceof Long) actorId = (Long) det; } catch (Exception ignored) {} }
+                                                return notificationService.createNotification("users", restored.getId(), "RESTORE", "Usuario restaurado: " + restored.getEmail(), actorId, actorEmail).thenReturn(restored);
+                                        })
+                                )
                                 .map(UserDto::fromEntity)
                                 .map(dto -> ApiResponse.success("Usuario restaurado exitosamente", dto));
         }
@@ -162,5 +199,59 @@ public class UserController {
                 log.info("GET /api/users/stats");
                 return userService.getUserStats()
                                 .map(stats -> ApiResponse.success("Estadísticas obtenidas exitosamente", stats));
+        }
+
+        // ========== ENDPOINTS DE TESTING (SIN AUTENTICACIÓN) ==========
+        
+        @PostMapping("/test-create")
+        @Operation(summary = "TESTING: Crear usuario sin autenticación")
+        public Mono<org.springframework.http.ResponseEntity<ApiResponse<UserDto>>> testCreateUser(
+                        @RequestBody UserDto userDTO) {
+                log.info("🧪 TEST: Creating user without auth: {}", userDTO.getEmail());
+
+                User user = userDTO.toEntity();
+                if (userDTO.getPassword() != null) {
+                        user.setPasswordHash(userDTO.getPassword());
+                }
+
+                return userService.createUser(user)
+                                .map(UserDto::fromEntity)
+                                .map(dto -> ApiResponse.success("Usuario creado exitosamente (TEST)", dto))
+                                .map(response -> org.springframework.http.ResponseEntity.status(HttpStatus.CREATED)
+                                                .body(response))
+                                .doOnSuccess(r -> log.info("✅ TEST: User created successfully"))
+                                .doOnError(e -> log.error("❌ TEST: Error creating user", e));
+        }
+
+        @PutMapping("/test-update/{id}")
+        @Operation(summary = "TESTING: Actualizar usuario sin autenticación")
+        public Mono<ApiResponse<UserDto>> testUpdateUser(
+                        @PathVariable Long id,
+                        @RequestBody UserDto userDTO) {
+
+                log.info("🧪 TEST: Updating user without auth: {}", id);
+
+                User user = userDTO.toEntity();
+                if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+                        user.setPasswordHash(userDTO.getPassword());
+                }
+
+                return userService.updateUser(id, user)
+                                .map(UserDto::fromEntity)
+                                .map(dto -> ApiResponse.success("Usuario actualizado exitosamente (TEST)", dto))
+                                .doOnSuccess(r -> log.info("✅ TEST: User updated successfully"))
+                                .doOnError(e -> log.error("❌ TEST: Error updating user", e));
+        }
+
+        @DeleteMapping("/test-delete/{id}")
+        @Operation(summary = "TESTING: Eliminar usuario sin autenticación")
+        public Mono<org.springframework.http.ResponseEntity<ApiResponse<Void>>> testDeleteUser(
+                        @PathVariable Long id) {
+                log.info("🧪 TEST: Deleting user without auth: {}", id);
+                return userService.deleteUser(id)
+                                .then(Mono.just(org.springframework.http.ResponseEntity.ok(
+                                                ApiResponse.<Void>success("Usuario eliminado exitosamente (TEST)", null))))
+                                .doOnSuccess(r -> log.info("✅ TEST: User deleted successfully"))
+                                .doOnError(e -> log.error("❌ TEST: Error deleting user", e));
         }
 }
