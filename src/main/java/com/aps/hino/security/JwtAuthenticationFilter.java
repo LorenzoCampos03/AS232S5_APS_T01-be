@@ -87,6 +87,7 @@ public class JwtAuthenticationFilter implements WebFilter {
     private boolean isPublicPath(String path) {
         return path.startsWith("/api/auth/login") ||
                path.startsWith("/api/public/") ||
+               path.startsWith("/api/users") ||
                // TEMP: open vehicles endpoints for testing without JWT
                path.startsWith("/api/vehicles") ||
                // Nuevo esquema de cotizaciones abierto temporalmente

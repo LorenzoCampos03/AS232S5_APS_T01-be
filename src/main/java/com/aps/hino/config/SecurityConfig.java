@@ -84,6 +84,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/vehicles/**").permitAll()
                         // 💥 Permitir temporalmente cotizaciones (nuevo esquema) sin autenticación
                         .pathMatchers("/api/cotizaciones").permitAll()
+                        .pathMatchers("/api/users").permitAll()
                         .pathMatchers("/api/cotizaciones/**").permitAll()
 
                         // Swagger/OpenAPI endpoints
