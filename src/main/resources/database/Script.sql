@@ -96,6 +96,19 @@ CREATE TABLE quote_attachments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table: contact_messages (Mensajes de contacto)
+CREATE TABLE contact_messages (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for better performance
 CREATE INDEX idx_vehicles_tipo ON vehicles(tipo);
 CREATE INDEX idx_vehicles_estado ON vehicles(estado);
@@ -108,6 +121,7 @@ CREATE INDEX idx_quotes_asesor ON quotes(asesor_asignado_id);
 CREATE INDEX idx_notifications_leido ON notifications(leido);
 CREATE INDEX idx_notifications_tipo ON notifications(tipo);
 CREATE INDEX idx_notifications_prioridad ON notifications(prioridad);
+CREATE INDEX idx_contact_messages_status ON contact_messages(status);
 
 -- Sample data for vehicles
 INSERT INTO vehicles (modelo, tipo, categoria, precio, capacidad, motor, año, estado, stock, imagen_url) VALUES

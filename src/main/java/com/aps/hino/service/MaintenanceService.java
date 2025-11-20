@@ -5,10 +5,7 @@ import com.aps.hino.model.Maintenance;
 import com.aps.hino.repository.MaintenanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,7 +19,6 @@ import java.util.Map;
 public class MaintenanceService {
 
     private final MaintenanceRepository maintenanceRepository;
-    private final WebClient webClient;
 
     // TODO: Replace with actual vehicles endpoint when available
     private static final Map<Integer, Map<String, Object>> VEHICLES_IN_MEMORY = new HashMap<>();
