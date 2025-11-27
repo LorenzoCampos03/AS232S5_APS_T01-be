@@ -1,3 +1,38 @@
+-- Migration: create noticias and noticia_imagenes
+CREATE TYPE IF NOT EXISTS noticia_tipo AS ENUM ('promocion', 'descuentos', 'lanzamientos', 'testimonios');
+CREATE TYPE IF NOT EXISTS noticia_estado AS ENUM ('ACTIVE', 'INACTIVE');
+
+CREATE TABLE IF NOT EXISTS noticias (
+  id BIGSERIAL PRIMARY KEY,
+  titulo VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE,
+  resumen VARCHAR(512),
+  contenido TEXT,
+  tipo noticia_tipo NOT NULL,
+  estado noticia_estado NOT NULL DEFAULT 'ACTIVE',
+  publish_at TIMESTAMPTZ NULL,
+  orden_prioridad INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_noticias_tipo ON noticias(tipo);
+CREATE INDEX IF NOT EXISTS idx_noticias_estado ON noticias(estado);
+CREATE INDEX IF NOT EXISTS idx_noticias_publish_at ON noticias(publish_at);
+
+CREATE TABLE IF NOT EXISTS noticia_imagen (
+  id BIGSERIAL PRIMARY KEY,
+  noticia_id BIGINT NOT NULL REFERENCES noticias(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  content_type VARCHAR(100),
+  data BYTEA NOT NULL,
+  file_size BIGINT,
+  orden INTEGER NOT NULL DEFAULT 0,
+  is_cover BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_noticia_imagen_noticia ON noticia_imagen(noticia_id, orden);
 -- Hino Connect Database Schema
 -- This schema defines all tables needed for the vehicle fleet management system
 
